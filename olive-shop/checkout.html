@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Checkout — OliveGrove</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <main>
+    <section>
+      <div class="container" id="checkout-root">
+        <h1 class="section-title">Checkout</h1>
+        <p class="section-sub">Demo checkout — no real payment will be made.</p>
+
+        <form id="checkout-form" class="cart-layout" novalidate>
+          <div>
+            <div class="card">
+              <h3 style="margin-top:0">1. Shipping details</h3>
+              <div class="form-grid">
+                <div class="full"><label for="name">Full name</label><input id="name" required autocomplete="name"><div class="error"></div></div>
+                <div><label for="email">Email</label><input id="email" type="email" required autocomplete="email"><div class="error"></div></div>
+                <div><label for="phone">Phone</label><input id="phone" type="tel" required autocomplete="tel"><div class="error"></div></div>
+                <div class="full"><label for="address">Address</label><input id="address" required autocomplete="street-address"><div class="error"></div></div>
+                <div><label for="city">City</label><input id="city" required autocomplete="address-level2"><div class="error"></div></div>
+                <div><label for="zip">Postal code</label><input id="zip" required autocomplete="postal-code"><div class="error"></div></div>
+                <div class="full"><label for="country">Country</label>
+                  <select id="country" required>
+                    <option value="">Select a country…</option>
+                    <option>Greece</option><option>Italy</option><option>Spain</option><option>Turkey</option>
+                    <option>Iran</option><option>Germany</option><option>France</option><option>United Kingdom</option>
+                    <option>United States</option><option>Canada</option>
+                  </select><div class="error"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card" style="margin-top:24px">
+              <h3 style="margin-top:0">2. Payment method</h3>
+              <div class="pay-methods" id="pay-methods">
+                <label class="pay-method"><input type="radio" name="method" value="card"><span class="icon">💳</span>Credit card</label>
+                <label class="pay-method"><input type="radio" name="method" value="paypal"><span class="icon">🅿️</span>PayPal</label>
+                <label class="pay-method"><input type="radio" name="method" value="bank"><span class="icon">🏦</span>Bank transfer</label>
+                <label class="pay-method"><input type="radio" name="method" value="cod"><span class="icon">💵</span>Cash on delivery</label>
+              </div>
+
+              <div class="pay-panel" data-panel="card">
+                <div class="form-grid">
+                  <div class="full"><label for="card-name">Name on card</label><input id="card-name" autocomplete="cc-name"><div class="error"></div></div>
+                  <div class="full"><label for="card-number">Card number</label><input id="card-number" inputmode="numeric" placeholder="4242 4242 4242 4242" maxlength="23" autocomplete="cc-number"><div class="error"></div></div>
+                  <div><label for="card-exp">Expiry (MM/YY)</label><input id="card-exp" placeholder="MM/YY" maxlength="5" autocomplete="cc-exp"><div class="error"></div></div>
+                  <div><label for="card-cvc">CVC</label><input id="card-cvc" inputmode="numeric" maxlength="4" autocomplete="cc-csc"><div class="error"></div></div>
+                </div>
+                <p class="note">🔒 Card details are only validated in your browser and are never saved or sent anywhere.</p>
+              </div>
+              <div class="pay-panel" data-panel="paypal"><p class="note">You'll be redirected to PayPal to complete your purchase (simulated in this demo).</p></div>
+              <div class="pay-panel" data-panel="bank"><p class="note">Transfer the total to <strong>IBAN GR00 0000 0000 0000 0000 0000 000</strong> using your order number as reference. Orders ship once payment is received.</p></div>
+              <div class="pay-panel" data-panel="cod"><p class="note">Pay in cash when your order arrives. A $2.00 handling fee applies.</p></div>
+
+              <label class="checkbox" style="margin-top:16px"><input type="checkbox" id="save-info"> Save my shipping details and payment method for next time</label>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3 style="margin-top:0">Order summary</h3>
+            <div id="summary-lines"></div>
+            <hr style="border:none;border-top:1px solid var(--olive-100)">
+            <div id="summary-totals"></div>
+            <button type="submit" class="btn btn-primary" style="width:100%;margin-top:16px" id="pay-btn">Place order</button>
+            <a href="cart.html" class="btn btn-outline" style="width:100%;text-align:center;margin-top:10px">Back to cart</a>
+          </div>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/products.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    renderLayout("cart");
+
+    const COD_FEE = 2;
+    const form = document.getElementById("checkout-form");
+    const shippingFields = ["name", "email", "phone", "address", "city", "zip", "country"];
+    const $ = id => document.getElementById(id);
+
+    if (Cart.count() === 0) location.replace("cart.html");
+
+    // ----- Prefill from saved payment settings -----
+    const settings = Settings.get();
+    shippingFields.forEach(f => { if (settings[f]) $(f).value = settings[f]; });
+    $("save-info").checked = settings.saveInfo;
+    selectMethod(settings.method);
+
+    function currentMethod() {
+      return form.querySelector("input[name=method]:checked").value;
+    }
+
+    function selectMethod(method) {
+      form.querySelectorAll("input[name=method]").forEach(r => {
+        r.checked = r.value === method;
+        r.closest(".pay-method").classList.toggle("selected", r.checked);
+      });
+      form.querySelectorAll(".pay-panel").forEach(p => p.classList.toggle("active", p.dataset.panel === method));
+      renderSummary();
+    }
+
+    $("pay-methods").addEventListener("change", e => selectMethod(e.target.value));
+
+    // ----- Summary -----
+    function renderSummary() {
+      if (!$("summary-lines")) return;
+      const t = Cart.totals();
+      const fee = currentMethod() === "cod" ? COD_FEE : 0;
+      $("summary-lines").innerHTML = Cart.lines().map(({ product: p, qty, total }) =>
+        `<div class="summary-row"><span>${p.emoji} ${escapeHtml(p.name)} <small>(${p.unit}) × ${qty}</small></span><span>${money(total)}</span></div>`).join("");
+      $("summary-totals").innerHTML = `
+        <div class="summary-row"><span>Subtotal</span><span>${money(t.subtotal)}</span></div>
+        <div class="summary-row"><span>Shipping</span><span>${t.shipping === 0 ? "Free" : money(t.shipping)}</span></div>
+        <div class="summary-row"><span>Tax</span><span>${money(t.tax)}</span></div>
+        ${fee ? `<div class="summary-row"><span>COD fee</span><span>${money(fee)}</span></div>` : ""}
+        <div class="summary-row total"><span>Total</span><span>${money(t.total + fee)}</span></div>`;
+      $("pay-btn").textContent = currentMethod() === "card" ? `Pay ${money(t.total + fee)}` : "Place order";
+    }
+
+    // ----- Input formatting -----
+    $("card-number").addEventListener("input", e => {
+      e.target.value = e.target.value.replace(/\D/g, "").slice(0, 19).replace(/(.{4})/g, "$1 ").trim();
+    });
+    $("card-exp").addEventListener("input", e => {
+      const digits = e.target.value.replace(/\D/g, "").slice(0, 4);
+      e.target.value = digits.length > 2 ? `${digits.slice(0, 2)}/${digits.slice(2)}` : digits;
+    });
+    $("card-cvc").addEventListener("input", e => { e.target.value = e.target.value.replace(/\D/g, ""); });
+
+    // ----- Validation -----
+    function luhn(number) {
+      let sum = 0;
+      [...number].reverse().forEach((d, i) => {
+        let n = +d;
+        if (i % 2 === 1) { n *= 2; if (n > 9) n -= 9; }
+        sum += n;
+      });
+      return sum % 10 === 0;
+    }
+
+    function setError(id, message) {
+      const input = $(id);
+      input.classList.toggle("invalid", !!message);
+      input.parentElement.querySelector(".error").textContent = message || "";
+      return !message;
+    }
+
+    function validate() {
+      let ok = true;
+      shippingFields.forEach(f => { ok = setError(f, $(f).value.trim() ? "" : "This field is required") && ok; });
+      if ($("email").value && !/^\S+@\S+\.\S+$/.test($("email").value)) ok = setError("email", "Enter a valid email") && ok;
+
+      if (currentMethod() === "card") {
+        const number = $("card-number").value.replace(/\s/g, "");
+        const [mm, yy] = $("card-exp").value.split("/").map(Number);
+        const now = new Date();
+        const expired = !mm || !yy || mm < 1 || mm > 12 ||
+          new Date(2000 + yy, mm) <= new Date(now.getFullYear(), now.getMonth());
+
+        ok = setError("card-name", $("card-name").value.trim() ? "" : "Name on card is required") && ok;
+        ok = setError("card-number", number.length >= 12 && luhn(number) ? "" : "Invalid card number") && ok;
+        ok = setError("card-exp", expired ? "Invalid or expired date" : "") && ok;
+        ok = setError("card-cvc", /^\d{3,4}$/.test($("card-cvc").value) ? "" : "Invalid CVC") && ok;
+      }
+      return ok;
+    }
+
+    // Clear a field's error as soon as the user edits it.
+    form.addEventListener("input", e => {
+      if (e.target.classList.contains("invalid")) setError(e.target.id, "");
+    });
+
+    // ----- Submit -----
+    form.addEventListener("submit", e => {
+      e.preventDefault();
+      if (!validate()) {
+        form.querySelector(".invalid")?.focus();
+        return;
+      }
+
+      const method = currentMethod();
+      if ($("save-info").checked) {
+        const values = { method, saveInfo: true };
+        shippingFields.forEach(f => values[f] = $(f).value.trim());
+        Settings.set(values);
+      } else {
+        Settings.set({ saveInfo: false, ...Object.fromEntries(shippingFields.map(f => [f, ""])) });
+      }
+
+      const btn = $("pay-btn");
+      btn.disabled = true;
+      btn.textContent = "Processing…";
+
+      // Simulate talking to a payment provider.
+      setTimeout(() => {
+        const orderId = "OG-" + Date.now().toString(36).toUpperCase();
+        const total = Cart.totals().total + (method === "cod" ? COD_FEE : 0);
+        const email = $("email").value.trim();
+        const methodLabel = { card: "credit card", paypal: "PayPal", bank: "bank transfer", cod: "cash on delivery" }[method];
+        Cart.clear();
+        $("checkout-root").innerHTML = `
+          <div class="card success">
+            <div class="emoji">🫒✅</div>
+            <h1>Thank you for your order!</h1>
+            <p>Order <strong>${orderId}</strong> — ${money(total)} via ${methodLabel}.</p>
+            <p>A confirmation will be sent to <strong>${escapeHtml(email)}</strong>.</p>
+            <a href="shop.html" class="btn btn-olive">Continue shopping</a>
+          </div>`;
+      }, 1200);
+    });
+  </script>
+</body>
+</html>
