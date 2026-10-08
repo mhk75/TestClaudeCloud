@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Payment Settings — OliveGrove</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <main>
+    <section>
+      <div class="container" style="max-width:720px">
+        <h1 class="section-title">Payment settings</h1>
+        <p class="section-sub">Choose your defaults for faster checkout. Saved only in this browser.</p>
+
+        <form id="settings-form" class="card">
+          <h3 style="margin-top:0">Default payment method</h3>
+          <div class="pay-methods" id="pay-methods">
+            <label class="pay-method"><input type="radio" name="method" value="card"><span class="icon">💳</span>Credit card</label>
+            <label class="pay-method"><input type="radio" name="method" value="paypal"><span class="icon">🅿️</span>PayPal</label>
+            <label class="pay-method"><input type="radio" name="method" value="bank"><span class="icon">🏦</span>Bank transfer</label>
+            <label class="pay-method"><input type="radio" name="method" value="cod"><span class="icon">💵</span>Cash on delivery</label>
+          </div>
+
+          <h3>Currency</h3>
+          <select id="currency">
+            <option value="USD">US Dollar ($)</option>
+            <option value="EUR">Euro (€)</option>
+            <option value="GBP">British Pound (£)</option>
+          </select>
+          <p class="note" style="margin-top:10px">Changes how prices are displayed. This demo does not convert amounts.</p>
+
+          <h3>Saved shipping details</h3>
+          <label class="checkbox"><input type="checkbox" id="save-info"> Remember my shipping details at checkout</label>
+          <div class="form-grid" style="margin-top:16px">
+            <div class="full"><label for="name">Full name</label><input id="name" autocomplete="name"></div>
+            <div><label for="email">Email</label><input id="email" type="email" autocomplete="email"></div>
+            <div><label for="phone">Phone</label><input id="phone" type="tel" autocomplete="tel"></div>
+            <div class="full"><label for="address">Address</label><input id="address" autocomplete="street-address"></div>
+            <div><label for="city">City</label><input id="city" autocomplete="address-level2"></div>
+            <div><label for="zip">Postal code</label><input id="zip" autocomplete="postal-code"></div>
+            <div class="full"><label for="country">Country</label><select id="country">
+              <option value="">Select a country…</option>
+              <option>Greece</option><option>Italy</option><option>Spain</option><option>Turkey</option>
+              <option>Iran</option><option>Germany</option><option>France</option><option>United Kingdom</option>
+              <option>United States</option><option>Canada</option>
+            </select></div>
+          </div>
+
+          <p class="note" style="margin-top:20px">🔒 For your security, card numbers are never stored — you'll enter them at checkout each time.</p>
+
+          <div style="display:flex;gap:12px;margin-top:20px;flex-wrap:wrap">
+            <button type="submit" class="btn btn-olive">Save settings</button>
+            <button type="button" class="btn btn-outline" id="reset">Reset to defaults</button>
+          </div>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/products.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    renderLayout("settings");
+
+    const form = document.getElementById("settings-form");
+    const fields = ["name", "email", "phone", "address", "city", "zip", "country"];
+    const $ = id => document.getElementById(id);
+
+    function selectMethod(method) {
+      form.querySelectorAll("input[name=method]").forEach(r => {
+        r.checked = r.value === method;
+        r.closest(".pay-method").classList.toggle("selected", r.checked);
+      });
+    }
+
+    function fill() {
+      const s = Settings.get();
+      selectMethod(s.method);
+      $("currency").value = s.currency;
+      $("save-info").checked = s.saveInfo;
+      fields.forEach(f => $(f).value = s[f]);
+    }
+
+    $("pay-methods").addEventListener("change", e => selectMethod(e.target.value));
+
+    form.addEventListener("submit", e => {
+      e.preventDefault();
+      const values = {
+        method: form.querySelector("input[name=method]:checked").value,
+        currency: $("currency").value,
+        saveInfo: $("save-info").checked,
+      };
+      fields.forEach(f => values[f] = values.saveInfo ? $(f).value.trim() : "");
+      Settings.set(values);
+      fill();
+      showToast("Payment settings saved");
+    });
+
+    $("reset").addEventListener("click", () => {
+      if (!confirm("Reset all payment settings?")) return;
+      Settings.reset();
+      fill();
+      showToast("Settings reset");
+    });
+
+    fill();
+  </script>
+</body>
+</html>

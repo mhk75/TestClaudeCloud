@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Shop — OliveGrove</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <main>
+    <section>
+      <div class="container">
+        <h1 class="section-title">Our products</h1>
+        <p class="section-sub">Olive oil, whole & sliced olives, spreads and natural care.</p>
+        <div class="filters" id="filters"></div>
+        <div class="products" id="product-list"></div>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/products.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    renderLayout("shop");
+
+    const filtersEl = document.getElementById("filters");
+    const listEl = document.getElementById("product-list");
+    let current = new URLSearchParams(location.search).get("category") || "all";
+    if (!CATEGORIES[current]) current = "all";
+
+    function render() {
+      filtersEl.innerHTML = Object.entries(CATEGORIES)
+        .map(([key, label]) => `<button class="filter-btn ${key === current ? "active" : ""}" data-cat="${key}">${label}</button>`)
+        .join("");
+      const visible = current === "all" ? PRODUCTS : PRODUCTS.filter(p => p.category === current);
+      listEl.innerHTML = visible.map(productCard).join("");
+    }
+
+    filtersEl.addEventListener("click", e => {
+      const btn = e.target.closest("[data-cat]");
+      if (!btn) return;
+      current = btn.dataset.cat;
+      history.replaceState(null, "", current === "all" ? "shop.html" : `shop.html?category=${current}`);
+      render();
+    });
+
+    render();
+  </script>
+</body>
+</html>

@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OliveGrove — Olives & Olive Oil</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <main>
+    <section class="hero">
+      <div class="container">
+        <div>
+          <h1>From our groves<br>to your table</h1>
+          <p>Premium extra virgin olive oil, hand-cured olives and natural olive products — harvested and pressed with care.</p>
+          <a href="shop.html" class="btn btn-primary">Shop now</a>
+        </div>
+        <div class="hero-art">🫒</div>
+      </div>
+    </section>
+
+    <section>
+      <div class="container">
+        <h2 class="section-title">Why our olives?</h2>
+        <p class="section-sub">Three generations of olive growing in every bottle and jar.</p>
+        <div class="features">
+          <div class="feature"><div class="icon">🌳</div><h3>Family groves</h3><p>Our trees grow on sun-soaked hills without synthetic pesticides.</p></div>
+          <div class="feature"><div class="icon">✋</div><h3>Hand-picked</h3><p>Olives are harvested by hand at peak ripeness to protect the fruit.</p></div>
+          <div class="feature"><div class="icon">❄️</div><h3>Cold-pressed</h3><p>Pressed within hours below 27°C to keep flavour and nutrients.</p></div>
+          <div class="feature"><div class="icon">🚚</div><h3>Free shipping</h3><p>Free delivery on all orders over $50.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="about">
+      <div class="container">
+        <div>
+          <h2>About the olive</h2>
+          <p>The olive tree (<em>Olea europaea</em>) has been cultivated around the Mediterranean for over 6,000 years. Its fruit gives us one of the healthiest fats in the world — rich in monounsaturated fats, vitamin E and polyphenols.</p>
+          <p>Green and black olives come from the same tree: green ones are picked before they ripen, black ones are left to mature on the branch.</p>
+        </div>
+        <div>
+          <h3>From tree to bottle</h3>
+          <ol>
+            <li><strong>Harvest</strong> — olives are picked in autumn and early winter.</li>
+            <li><strong>Wash & crush</strong> — leaves are removed and the fruit is crushed into a paste.</li>
+            <li><strong>Malaxation</strong> — the paste is slowly mixed so oil droplets join.</li>
+            <li><strong>Cold press</strong> — oil is separated from water and pulp without heat.</li>
+            <li><strong>Bottle</strong> — the oil rests, then is bottled in dark glass to protect it from light.</li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="container">
+        <h2 class="section-title">Best sellers</h2>
+        <p class="section-sub">Our customers' favourite picks.</p>
+        <div class="products" id="featured"></div>
+        <p style="text-align:center;margin-top:30px"><a href="shop.html" class="btn btn-outline">See all products</a></p>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/products.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    renderLayout("home");
+    const featuredIds = ["evoo-500", "black-sliced", "tapenade", "gift-box"];
+    document.getElementById("featured").innerHTML = featuredIds.map(id => productCard(findProduct(id))).join("");
+  </script>
+</body>
+</html>
